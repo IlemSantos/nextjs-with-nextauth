@@ -37,14 +37,14 @@ export default NextAuth({
           body: JSON.stringify(credentials),
           headers: { "Content-Type": "application/json", "Accept-Language": "en-US" }
         })
-        const { user, error } = await res.json()
+        const { user, access_token, error } = await res.json()
 
         if (!res.ok) {
           throw new Error(error);
         }
         // If no error and we have user data, return it
         if (res.ok && user) {
-          return user
+          return ({ ...user, access_token })
         }
         // Return null if user data could not be retrieved
         return null
@@ -63,20 +63,12 @@ export default NextAuth({
     async jwt({ token, user, account, profile, isNewUser }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (account) {
-        if (account.provider != 'credentials') {
-          token.accessToken = account.access_token
-          token.id = profile.id
-        } else {
-          // token.accessToken = 
+        if (account.type == 'credentials') {
+          account = { ...account, access_token: user.access_token }
         }
-      }
-      if (user) {
-        if (account.provider != 'credentials') {
-          // token.accessToken = account.access_token
-          // token.id = profile.id
-        } else {
-          token.accessToken = user.access_token
-        }
+
+        token.accessToken = account.access_token
+        // token.id = profile.id
       }
       return token
     },
